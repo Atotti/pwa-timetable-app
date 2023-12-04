@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 /// <reference lib="webworker" />
 /* eslint-disable no-restricted-globals */
 
@@ -78,3 +80,41 @@ self.addEventListener('message', (event) => {
 });
 
 // Any other custom service worker logic can go here.
+// Add this at the top of your service worker file
+const CACHE_NAME = 'offline-cache-v1';
+const OFFLINE_URL = '/index.html';
+
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll([
+                OFFLINE_URL,
+                '/static/css/main.1f405b22.css',
+                '/static/css/main.1f405b22.css.map',
+                '/static/js/787.6bc4443a.chunk.js.map',
+                '/static/js/787.6bc4443a.chunk.js',
+                '/static/js/main.c95dc40e.js',
+                '/static/js/main.c95dc40e.js.map',
+                '/static/js/main.c95dc40e.js.LICENSE.txt',
+                '/service-worker.js',
+            ]);
+        })
+    );
+});
+
+self.addEventListener('fetch', (event) => {
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request)
+                .catch(() => caches.match(OFFLINE_URL))
+        );
+    } else {
+        // Use the existing runtime caching strategy
+        event.respondWith(
+            caches.match(event.request).then((response) => {
+                return response || fetch(event.request);
+            })
+        );
+    }
+});
+
